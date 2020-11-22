@@ -1,4 +1,4 @@
-package com.wsayan.inctax
+package com.wsayan.sample
 
 import org.junit.Test
 

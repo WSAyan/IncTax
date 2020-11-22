@@ -1,4 +1,4 @@
-package com.wsayan.inctax
+package com.wsayan.sample
 
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
