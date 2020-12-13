@@ -11,6 +11,6 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         findViewById<TextView>(R.id.taxText).text =
         IncTaxCore().calculateTaxByDefaultGross(
-            IncTaxCore.GENDER_FEMALE,55000,60000,0).toString()
+            IncTaxCore.TYPE_FEMALE,55000,60000,0).toString()
     }
 }

@@ -1,8 +1,9 @@
 package com.wsayan.inctax;
 
 public class IncTaxCore {
-    public static final String GENDER_MALE = "_male";
-    public static final String GENDER_FEMALE = "_female";
+    public static final String TYPE_MALE = "_male";
+    public static final String TYPE_FEMALE = "_female";
+    public static final String TYPE_SPECIAL = "_special";
 
     private static final int BASIC_PERCENTAGE = 60;
     private static final int HOUSE_RENT_PERCENTAGE = 30;
@@ -20,6 +21,7 @@ public class IncTaxCore {
 
     private static final int TAX_RANGE_FIRST = 300000;
     private static final int TAX_RANGE_FIRST_FEMALE = 350000;
+    private static final int TAX_RANGE_FIRST_SPECIAL = 350000;
     private static final int TAX_CREDIT_RANGE = 500000;
 
     private static final int TAX_STEP_SECOND = 100000;
@@ -39,7 +41,7 @@ public class IncTaxCore {
 
     private static final int NUMBER_OF_MONTHS = 12;
 
-    public int calculateTaxByDefaultGross(String gender, int gross, int totalExtraBenefits,
+    public int calculateTaxByDefaultGross(String payerType, int gross, int totalExtraBenefits,
                                           int totalAllowableInvestments) {
         int basic = generateBasic(gross, BASIC_PERCENTAGE);
         int houseRent = generateHouseRent(gross, HOUSE_RENT_PERCENTAGE);
@@ -47,12 +49,19 @@ public class IncTaxCore {
         int medicalAllowance = generateMedicalAllowance(gross, MEDICAL_ALLOWANCE_PERCENTAGE);
 
         int taxableIncome = calculateTaxableIncome(basic, houseRent, conveyanceAllowance, medicalAllowance, totalExtraBenefits);
-        int taxCredit = calculateTaxCredit(gender, taxableIncome, totalAllowableInvestments);
-        int taxLiablity = calculateTax(taxableIncome, gender);
+        int taxCredit = calculateTaxCredit(payerType, taxableIncome, totalAllowableInvestments);
+        int taxLiablity = calculateTax(taxableIncome, payerType);
         return taxLiablity - taxCredit;
     }
 
-    private int calculateTaxCredit(String gender, int taxableIncome, int totalAllowableInvestments) {
+    public int calculateTax(String payerType, int basic, int houseRent, int conveyanceAllowance, int medicalAllowance, int totalExtraBenefits, int totalAllowableInvestments) {
+        int taxableIncome = calculateTaxableIncome(basic, houseRent, conveyanceAllowance, medicalAllowance, totalExtraBenefits);
+        int taxCredit = calculateTaxCredit(payerType, taxableIncome, totalAllowableInvestments);
+        int taxLiablity = calculateTax(taxableIncome, payerType);
+        return taxLiablity - taxCredit;
+    }
+
+    public int calculateTaxCredit(String payerType, int taxableIncome, int totalAllowableInvestments) {
         if (totalAllowableInvestments > ALLOWABLE_INVESTMENT_LIMIT) {
             totalAllowableInvestments = ALLOWABLE_INVESTMENT_LIMIT;
         }
@@ -79,64 +88,67 @@ public class IncTaxCore {
         return taxCredit;
     }
 
-    private int calculateTaxableIncome(int basic, int houseRent, int conveyanceAllowance, int medicalAllowance, int totalExtraBenefits) {
+    public int calculateTaxableIncome(int basic, int houseRent, int conveyanceAllowance, int medicalAllowance, int totalExtraBenefits) {
         return (basic + deductHouseRentTax(houseRent, basic) + deductConveyanceAllowanceTax(conveyanceAllowance, basic) + deductMedicalAllowanceTax(medicalAllowance, basic)) * NUMBER_OF_MONTHS + totalExtraBenefits;
     }
 
-    private int deductHouseRentTax(int houseRent, int basic) {
+    public int deductHouseRentTax(int houseRent, int basic) {
         if (houseRent < HOUSE_RENT_DEDUCTABLE || houseRent < basic / 2)
             return 0;
 
         return houseRent - HOUSE_RENT_DEDUCTABLE;
     }
 
-    private int deductConveyanceAllowanceTax(int conveyanceAllowance, int basic) {
+    public int deductConveyanceAllowanceTax(int conveyanceAllowance, int basic) {
         if (conveyanceAllowance < CONVEYANCE_ALLOWANCE_DEDUCTABLE)
             return 0;
 
         return conveyanceAllowance - CONVEYANCE_ALLOWANCE_DEDUCTABLE;
     }
 
-    private int deductMedicalAllowanceTax(int medicalAllowance, int basic) {
+    public int deductMedicalAllowanceTax(int medicalAllowance, int basic) {
         if (medicalAllowance < MEDICAL_ALLOWANCE_DEDUCTABLE || medicalAllowance < basic / 10)
             return 0;
 
         return medicalAllowance - MEDICAL_ALLOWANCE_DEDUCTABLE;
     }
 
-    private int generateBasic(int gross, int percentage) {
+    public int generateBasic(int gross, int percentage) {
         return (percentage * gross) / 100;
     }
 
-    private int generateHouseRent(int gross, int percentage) {
+    public int generateHouseRent(int gross, int percentage) {
         return (percentage * gross) / 100;
     }
 
-    private int generateConveyanceAllowance(int gross, int percentage) {
+    public int generateConveyanceAllowance(int gross, int percentage) {
         return (percentage * gross) / 100;
     }
 
-    private int generateMedicalAllowance(int gross, int percentage) {
+    public int generateMedicalAllowance(int gross, int percentage) {
         return (percentage * gross) / 100;
     }
 
-    private int calculateTax(int taxableIncome, String gender) {
+    public int calculateTax(int taxableIncome, String payerType) {
         int calcTax = 0;
         int taxable = 0;
-        int genderBasedFirstRange = TAX_RANGE_FIRST;
-        switch (gender) {
-            case GENDER_MALE:
-                genderBasedFirstRange = TAX_RANGE_FIRST;
+        int payerTypeBasedFirstRange = TAX_RANGE_FIRST;
+        switch (payerType) {
+            case TYPE_MALE:
+                payerTypeBasedFirstRange = TAX_RANGE_FIRST;
                 break;
-            case GENDER_FEMALE:
-                genderBasedFirstRange = TAX_RANGE_FIRST_FEMALE;
+            case TYPE_FEMALE:
+                payerTypeBasedFirstRange = TAX_RANGE_FIRST_FEMALE;
+                break;
+            case TYPE_SPECIAL:
+                payerTypeBasedFirstRange = TAX_RANGE_FIRST_SPECIAL;
                 break;
         }
 
-        if (taxableIncome < genderBasedFirstRange) return 0;
+        if (taxableIncome < payerTypeBasedFirstRange) return 0;
 
-        taxable = taxableIncome - genderBasedFirstRange;
-        int taxRangeSecond = genderBasedFirstRange + TAX_STEP_SECOND;
+        taxable = taxableIncome - payerTypeBasedFirstRange;
+        int taxRangeSecond = payerTypeBasedFirstRange + TAX_STEP_SECOND;
         if (taxable > taxRangeSecond) {
             calcTax += taxRangeSecond * TAX_RANGE_SECOND_PERCENTAGE / 100;
         } else if (taxable > 0) {
